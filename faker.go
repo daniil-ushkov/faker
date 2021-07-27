@@ -431,9 +431,6 @@ func RemoveProvider(tag string) error {
 func getValue(a interface{}) (reflect.Value, error) {
 	t := reflect.TypeOf(a)
 	if t == nil {
-		if ignoreInterface {
-			return reflect.New(reflect.TypeOf(reflect.Struct)), nil
-		}
 		return reflect.Value{}, fmt.Errorf("interface{} not allowed")
 	}
 	k := t.Kind()
@@ -468,6 +465,9 @@ func getValue(a interface{}) (reflect.Value, error) {
 			for i := 0; i < v.NumField(); i++ {
 				if !v.Field(i).CanSet() {
 					continue // to avoid panic to set on unexported field in struct
+				}
+				if reflect.TypeOf(v.Field(i).Interface()) == nil && ignoreInterface {
+					continue // to avoid panic from custom interfaces
 				}
 				tags := decodeTags(t, i)
 				switch {
